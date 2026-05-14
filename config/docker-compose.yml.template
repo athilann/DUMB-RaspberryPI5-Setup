@@ -1,0 +1,24 @@
+services:
+  dumb:
+    image: iampuid0/dumb:latest
+    container_name: dumb
+    stdin_open: true
+    tty: true
+    devices:
+      - /dev/fuse:/dev/fuse:rwm
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    network_mode: host
+    volumes:
+      - /opt/dumb/config:/config
+      - /opt/dumb/data:/data
+      - /opt/dumb/log:/log
+    restart: unless-stopped
+    shm_size: "128mb"
+    stop_grace_period: 30s

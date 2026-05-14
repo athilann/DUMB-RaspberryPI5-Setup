@@ -1,0 +1,47 @@
+{
+  "puid": ${PUID},
+  "pgid": ${PGID},
+  "tz": "${TZ}",
+  "dumb": {
+    "plex_token": "${PLEX_TOKEN}",
+    "plex_address": "http://localhost:32400"
+  },
+  "plex": {
+    "enabled": true,
+    "plex_claim": "${PLEX_CLAIM}"
+  },
+  "decypharr": {
+    "enabled": true,
+    "mount_type": "dfs",
+    "mount_path": "/mnt/debrid/decypharr",
+    "api_keys": {}
+  },
+  "radarr": {
+    "instances": {
+      "Default": {
+        "enabled": true
+      }
+    }
+  },
+  "sonarr": {
+    "instances": {
+      "Default": {
+        "enabled": true
+      }
+    }
+  },
+  "prowlarr": {
+    "instances": {
+      "Default": {
+        "enabled": true
+      }
+    }
+  },
+  "seerr": {
+    "instances": {
+      "Default": {
+        "enabled": true
+      }
+    }
+  }
+}

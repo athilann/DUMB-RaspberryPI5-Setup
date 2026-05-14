@@ -1,0 +1,23 @@
+# Credentials — NEVER commit these
+.env
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Rendered config files (contain credentials after envsubst)
+config/docker-compose.yml
+config/dumb_config.json
+
+# OS / editor artifacts
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Local test output
+tests/*.log
+tests/results/

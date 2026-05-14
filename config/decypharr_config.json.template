@@ -1,0 +1,56 @@
+{
+    "url_base": "/",
+    "port": "8282",
+    "log_level": "info",
+    "debrids": [
+        {
+            "name": "realdebrid",
+            "type": "realdebrid",
+            "api_key": "${RD_API_TOKEN}"
+        }
+    ],
+    "qbittorrent": {},
+    "repair": {
+        "source": "arr",
+        "workers": 5,
+        "nntp_connection_percent": 20,
+        "strategy": "per_entry",
+        "recheck_interval": "168h"
+    },
+    "webdav": {},
+    "mount": {
+        "type": "dfs",
+        "mount_path": "/mnt/debrid/decypharr",
+        "dfs": {
+            "cache_dir": "/decypharr/cache",
+            "allow_other": true,
+            "default_permissions": true,
+            "uid": ${PUID},
+            "gid": ${PGID}
+        }
+    },
+    "download_folder": "/mnt/debrid/decypharr_downloads",
+    "allowed_file_types": [
+        "3gp", "ac3", "aiff", "alac", "amr", "ape", "asf", "asx", "avc", "avi",
+        "bin", "bivx", "dat", "divx", "dts", "dv", "dvr-ms", "flac", "fli", "flv",
+        "ifo", "m2ts", "m2v", "m3u", "m4a", "m4p", "m4v", "mid", "midi", "mk3d",
+        "mka", "mkv", "mov", "mp2", "mp3", "mp4", "mpa", "mpeg", "mpg", "nrg",
+        "nsv", "nuv", "ogg", "ogm", "ogv", "pva", "qt", "ra", "rm", "rmvb",
+        "strm", "svq3", "ts", "ty", "viv", "vob", "voc", "vp3", "wav", "webm",
+        "wma", "wmv", "wpl", "wtv", "wv", "xvid"
+    ],
+    "usenet": {
+        "max_connections": 15,
+        "read_ahead": "16MB",
+        "processing_timeout": "10m",
+        "availability_sample_percent": 10,
+        "max_concurrent_nzb": 2,
+        "disk_buffer_path": "/decypharr/usenet/streams"
+    },
+    "use_auth": true,
+    "notifications": {},
+    "refresh_interval": "30s",
+    "categories": ["sonarr", "radarr"],
+    "default_download_action": "symlink",
+    "retries": 3
+}
