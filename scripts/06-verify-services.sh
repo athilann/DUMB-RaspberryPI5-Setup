@@ -38,6 +38,7 @@ check_service "Sonarr"     8989  "/"
 check_service "Prowlarr"   9696  "/"
 check_service "Overseerr"  5055  "/"
 check_service "Profilarr"  6868  "/"
+check_service "Threadfin"  34400 "/"
 
 echo ""
 log_step "Checking logs for errors..."
@@ -53,4 +54,5 @@ echo "  Radarr:     http://${PI_HOST}:7878"
 echo "  Sonarr:     http://${PI_HOST}:8989"
 echo "  Prowlarr:   http://${PI_HOST}:9696"
 echo "  Decypharr:  http://${PI_HOST}:8082
-  Profilarr:  http://${PI_HOST}:6868"
+  Profilarr:  http://${PI_HOST}:6868
+  Threadfin:  http://${PI_HOST}:34400"

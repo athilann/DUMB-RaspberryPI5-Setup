@@ -1,4 +1,17 @@
 services:
+  threadfin:
+    image: mgoerentz/threadfin:latest
+    container_name: threadfin
+    network_mode: host
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - THREADFIN_PORT=34400
+    volumes:
+      - /opt/dumb/data/threadfin:/home/threadfin/conf
+    restart: unless-stopped
+
   dumb:
     image: iampuid0/dumb:latest
     container_name: dumb

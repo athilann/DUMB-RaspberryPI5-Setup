@@ -34,6 +34,12 @@ mount required.
 | Overseerr   | 5055  | Media request UI                       |
 | Profilarr   | 6868  | Custom formats & quality profiles sync (DUMB internal) |
 
+### Separate Containers (not part of DUMB)
+
+| Service    | Port  | Purpose                                         |
+|------------|-------|-------------------------------------------------|
+| Threadfin  | 34400 | IPTV M3U proxy; emulates HDHomeRun tuner for Plex |
+
 ---
 
 ## Target Machine

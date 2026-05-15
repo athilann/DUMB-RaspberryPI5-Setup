@@ -24,6 +24,7 @@ TESTS=(
   "test-09-overseerr.sh"
   "test-10-plex.sh"
   "test-11-profilarr.sh"
+  "test-12-threadfin.sh"
 )
 
 TOTAL_PASS=0

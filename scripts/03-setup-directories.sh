@@ -22,6 +22,7 @@ echo "→ Creating directory structure under ${INSTALL_DIR}..."
 sudo mkdir -p \
   "${INSTALL_DIR}/config/decypharr" \
   "${INSTALL_DIR}/data" \
+  "${INSTALL_DIR}/data/threadfin" \
   "${INSTALL_DIR}/log"
 
 echo "→ Setting ownership to ${PI_USER:-pi}..."
