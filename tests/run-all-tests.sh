@@ -23,6 +23,7 @@ TESTS=(
   "test-08-prowlarr.sh"
   "test-09-overseerr.sh"
   "test-10-plex.sh"
+  "test-11-profilarr.sh"
 )
 
 TOTAL_PASS=0

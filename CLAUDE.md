@@ -32,6 +32,7 @@ mount required.
 | Sonarr      | 8989  | TV show library automation             |
 | Prowlarr    | 9696  | Indexer management                     |
 | Overseerr   | 5055  | Media request UI                       |
+| Profilarr   | 6868  | Custom formats & quality profiles sync (DUMB internal) |
 
 ---
 

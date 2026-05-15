@@ -43,5 +43,12 @@
         "enabled": true
       }
     }
+  },
+  "profilarr": {
+    "instances": {
+      "Default": {
+        "enabled": true
+      }
+    }
   }
 }
