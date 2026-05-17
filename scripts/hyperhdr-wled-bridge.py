@@ -128,6 +128,7 @@ def avg_color(flat, led_start, led_stop):
 
 
 wled_was_offline = False
+wled_just_reconnected = False  # signals main loop to drop buffered HyperHDR frames
 
 
 def wled_segments_ok():
@@ -142,7 +143,7 @@ def wled_segments_ok():
 
 
 def update_wled(flat):
-    global wled_was_offline
+    global wled_was_offline, wled_just_reconnected
     if wled_was_offline:
         try:
             setup_segments()
@@ -152,6 +153,7 @@ def update_wled(flat):
             time.sleep(1.0)
             if wled_segments_ok():
                 wled_was_offline = False
+                wled_just_reconnected = True  # tell main loop to reconnect HyperHDR
                 print(f"WLED reconnected, segments verified after {attempt + 1}s")
                 break
         return
@@ -245,6 +247,11 @@ def main():
                         update_wled(leds)
                     except Exception as e:
                         print(f"  WLED update error: {e}")
+                    if wled_just_reconnected:
+                        # Reconnect HyperHDR to discard buffered frames accumulated
+                        # while WLED was offline — avoids LED lag after WLED reboot
+                        print("  Reconnecting HyperHDR to flush frame buffer...")
+                        break
                     frames += 1
                     if frames % 100 == 0:
                         print(f"  {frames} frames forwarded")
