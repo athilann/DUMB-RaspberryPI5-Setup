@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bridge: HyperHDR LED colors → WLED zones via /json/state segments."""
+"""Bridge: HyperHDR LED colors → WLED per-LED via chunked DDP UDP."""
 
 import json
 import socket
@@ -12,8 +12,17 @@ import urllib.request
 
 HYPERHDR_HOST = "localhost"
 HYPERHDR_PORT = 8090
-WLED_URL = "http://192.168.50.157"
+WLED_IP = "192.168.50.157"
+WLED_URL = f"http://{WLED_IP}"
+WLED_DDP_PORT = 4048
 
+NUM_LEDS = 534
+
+# Max LEDs per DDP chunk: keeps UDP payload ≤ 1472 bytes (no IP fragmentation)
+# 487 × 3 + 10 (header) = 1471 bytes
+MAX_LEDS_PER_CHUNK = 487
+
+# Precomputed physical→HyperHDR index remapping
 # LED layout — 534 LEDs, counterclockwise from front, starting at bottom-center going left:
 #   Physical WLED:    0–81   bottom-left (center→left corner)
 #                    82–178  left side (bottom→top)
@@ -28,50 +37,11 @@ WLED_URL = "http://192.168.50.157"
 #   H 437–533  left (bottom→top)
 #
 # Mapping: physical P → HyperHDR H
-#   P   0–178  →  H = P + 355  (bottom-left and left side)
-#   P 179–533  →  H = P - 179  (top, right, bottom-right)
-#
-# 32 zones (WLED max segments) — finer resolution than previous 12 zones
-# Each entry: (wled_start, wled_stop_inclusive, hyperhdr_led_start, hyperhdr_led_stop_inclusive)
-ZONES = [
-    # bottom-left: 5 zones  (P 0–81 → H 355–436)
-    (0,   16,  355, 371),
-    (17,  33,  372, 388),
-    (34,  50,  389, 405),
-    (51,  66,  406, 421),
-    (67,  81,  422, 436),
-    # left: 6 zones          (P 82–178 → H 437–533)
-    (82,  97,  437, 452),
-    (98,  113, 453, 468),
-    (114, 129, 469, 484),
-    (130, 146, 485, 501),
-    (147, 162, 502, 517),
-    (163, 178, 518, 533),
-    # top: 10 zones          (P 179–348 → H 0–169)
-    (179, 195, 0,   16),
-    (196, 212, 17,  33),
-    (213, 229, 34,  50),
-    (230, 246, 51,  67),
-    (247, 263, 68,  84),
-    (264, 280, 85,  101),
-    (281, 297, 102, 118),
-    (298, 314, 119, 135),
-    (315, 331, 136, 152),
-    (332, 348, 153, 169),
-    # right: 5 zones         (P 349–443 → H 170–264)
-    (349, 367, 170, 188),
-    (368, 386, 189, 207),
-    (387, 405, 208, 226),
-    (406, 424, 227, 245),
-    (425, 443, 246, 264),
-    # bottom-right: 6 zones  (P 444–533 → H 265–354)
-    (444, 458, 265, 279),
-    (459, 474, 280, 295),
-    (475, 489, 296, 310),
-    (490, 504, 311, 325),
-    (505, 519, 326, 340),
-    (520, 533, 341, 354),
-]
+#   P   0–178  →  H = P + 355
+#   P 179–533  →  H = P - 179
+REMAP = [(p + 355) if p <= 178 else (p - 179) for p in range(NUM_LEDS)]
+
+udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 
 def wled_post(path, data):
@@ -84,88 +54,36 @@ def wled_post(path, data):
     return json.loads(urllib.request.urlopen(req, timeout=3).read())
 
 
-def setup_segments():
-    segs = []
-    for i, (ws, we, _, _) in enumerate(ZONES):
-        segs.append({
-            "id": i,
-            "start": ws,
-            "stop": we + 1,
-            "on": True,
-            "bri": 255,
-            "fx": 0,
-            "frz": False,
-        })
-    for i in range(len(ZONES), 32):
-        segs.append({"id": i, "stop": 0})
-
-    r = wled_post("/json/state", {
+def wled_setup():
+    """Configure WLED with a single full-strip segment (fallback when DDP live mode ends)."""
+    return wled_post("/json/state", {
         "on": True,
         "bri": 255,
         "transition": 0,
-        "AudioReactive": {"on": False},
-        "seg": segs,
-    })
-    ok = r.get("success", False)
-    if ok:
-        try:
-            wled_post("/json/state", {"psave": 1})
-            wled_post("/json/cfg", {"def": {"ps": 1, "on": True, "bri": 255}})
-        except Exception:
-            pass
-    return ok
+        "seg": [{"id": 0, "start": 0, "stop": NUM_LEDS, "on": True, "bri": 255, "fx": 0, "col": [[0, 0, 0]]}],
+    }).get("success", False)
 
 
-def avg_color(flat, led_start, led_stop):
-    r = g = b = 0
-    count = led_stop - led_start + 1
-    for i in range(led_start, led_stop + 1):
-        idx = i * 3
-        r += flat[idx]
-        g += flat[idx + 1]
-        b += flat[idx + 2]
-    return [r // count, g // count, b // count]
+def send_ddp(hyperhdr_flat):
+    """Send one per-LED DDP frame split into sub-MTU chunks."""
+    # Build physical-order RGB bytes from HyperHDR H-indexed flat array
+    phys = bytearray(NUM_LEDS * 3)
+    for p in range(NUM_LEDS):
+        h = REMAP[p]
+        phys[p * 3]     = hyperhdr_flat[h * 3]
+        phys[p * 3 + 1] = hyperhdr_flat[h * 3 + 1]
+        phys[p * 3 + 2] = hyperhdr_flat[h * 3 + 2]
 
-
-wled_was_offline = False
-wled_just_reconnected = False  # signals main loop to drop buffered HyperHDR frames
-
-
-def wled_segments_ok():
-    try:
-        state = json.loads(urllib.request.urlopen(
-            f"{WLED_URL}/json/state", timeout=3
-        ).read())
-        active = [s for s in state.get("seg", []) if s.get("stop", 0) > s.get("start", 0)]
-        return len(active) >= len(ZONES)
-    except Exception:
-        return False
-
-
-def update_wled(flat):
-    global wled_was_offline, wled_just_reconnected
-    if wled_was_offline:
-        try:
-            setup_segments()
-        except Exception:
-            return
-        for attempt in range(10):
-            time.sleep(1.0)
-            if wled_segments_ok():
-                wled_was_offline = False
-                wled_just_reconnected = True  # tell main loop to reconnect HyperHDR
-                print(f"WLED reconnected, segments verified after {attempt + 1}s")
-                break
-        return
-    segs = []
-    for i, (ws, we, hs, he) in enumerate(ZONES):
-        color = avg_color(flat, hs, he)
-        segs.append({"id": i, "col": [color]})
-    try:
-        wled_post("/json/state", {"on": True, "transition": 0, "seg": segs})
-    except Exception:
-        wled_was_offline = True
-        raise
+    offset = 0
+    while offset < NUM_LEDS:
+        chunk = min(MAX_LEDS_PER_CHUNK, NUM_LEDS - offset)
+        is_last = (offset + chunk >= NUM_LEDS)
+        flags = 0x41 if is_last else 0x40  # push flag only on last chunk
+        byte_offset = offset * 3
+        data = phys[byte_offset: byte_offset + chunk * 3]
+        header = struct.pack('>BBBBIH', flags, 0x00, 0x01, 0x01, byte_offset, len(data))
+        udp_sock.sendto(header + data, (WLED_IP, WLED_DDP_PORT))
+        offset += chunk
 
 
 def ws_handshake(sock):
@@ -220,12 +138,12 @@ def ws_recv(sock):
 
 
 def main():
-    print(f"Bridge started: HyperHDR:{HYPERHDR_PORT} → WLED {WLED_URL} (32-zone segments)")
+    print(f"Bridge started: HyperHDR:{HYPERHDR_PORT} → WLED {WLED_IP}:{WLED_DDP_PORT} (per-LED DDP, {NUM_LEDS} LEDs)")
     try:
-        ok = setup_segments()
-        print(f"WLED segments configured: {ok}")
+        ok = wled_setup()
+        print(f"WLED single-segment configured: {ok}")
     except Exception as e:
-        print(f"Warning: segment setup failed: {e}")
+        print(f"Warning: WLED setup failed: {e}")
 
     while True:
         try:
@@ -235,7 +153,7 @@ def main():
             ws_handshake(sock)
             ws_send(sock, {"command": "ledcolors", "subcommand": "ledstream-start", "tan": 1})
             sock.settimeout(5)
-            print("Connected to HyperHDR, streaming LED colors to WLED...")
+            print("Connected to HyperHDR, streaming per-LED DDP to WLED...")
             frames = 0
             while True:
                 msg = ws_recv(sock)
@@ -243,17 +161,9 @@ def main():
                     break
                 leds = (msg.get("result") or {}).get("leds")
                 if leds:
-                    try:
-                        update_wled(leds)
-                    except Exception as e:
-                        print(f"  WLED update error: {e}")
-                    if wled_just_reconnected:
-                        # Reconnect HyperHDR to discard buffered frames accumulated
-                        # while WLED was offline — avoids LED lag after WLED reboot
-                        print("  Reconnecting HyperHDR to flush frame buffer...")
-                        break
+                    send_ddp(leds)
                     frames += 1
-                    if frames % 100 == 0:
+                    if frames % 300 == 0:
                         print(f"  {frames} frames forwarded")
         except KeyboardInterrupt:
             print("Bridge stopped.")
