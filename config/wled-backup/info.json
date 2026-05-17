@@ -1,0 +1,120 @@
+{
+  "ver": "0.15.3",
+  "vid": 2508020,
+  "cn": "K\u014dsen",
+  "release": "ESP32",
+  "repo": "unknown",
+  "deviceId": "d40f8e9f2bf0355bea6d1a51d1a3f497a6ea44c281",
+  "leds": {
+    "count": 537,
+    "pwr": 120,
+    "fps": 10,
+    "maxpwr": 0,
+    "maxseg": 32,
+    "bootps": 1,
+    "seglc": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "lc": 1,
+    "rgbw": true,
+    "wv": 0,
+    "cct": 0
+  },
+  "str": false,
+  "name": "WLED-Gledopto",
+  "udpport": 21324,
+  "simplifiedui": false,
+  "live": false,
+  "liveseg": -1,
+  "lm": "",
+  "lip": "",
+  "ws": 0,
+  "fxcount": 187,
+  "palcount": 71,
+  "cpalcount": 0,
+  "maps": [
+    {
+      "id": 0
+    }
+  ],
+  "wifi": {
+    "bssid": "FC:34:97:92:26:40",
+    "rssi": -29,
+    "signal": 100,
+    "channel": 5,
+    "ap": false
+  },
+  "fs": {
+    "u": 81,
+    "t": 983,
+    "pmt": 537
+  },
+  "ndc": 0,
+  "arch": "esp32",
+  "core": "v3.3.6-16-gcc5440f6a2",
+  "clock": 240,
+  "flash": 4,
+  "lwip": 0,
+  "bootloaderSHA256": "90812e373703241fe800e0ec567d273f201bf88d3a434dd13042e3d8d08cf603",
+  "freeheap": 155648,
+  "uptime": 548,
+  "time": "1970-1-1, 00:09:08",
+  "u": {
+    "AudioReactive": [
+      "<button class=\"btn btn-xs\" onclick=\"requestJson({AudioReactive:{enabled:false}});\"><i class=\"icons on\">&#xe08f;</i></button>"
+    ],
+    "GEQ Input Level": [
+      "<div class=\"slider\"><div class=\"sliderwrap il\"><input class=\"noslide\" onchange=\"requestJson({AudioReactive:{inputLevel:parseInt(this.value)}});\" oninput=\"updateTrail(this);\" max=255 min=0 type=\"range\" value=128 /><div class=\"sliderdisplay\"></div></div></div>"
+    ],
+    "Audio Source": [
+      "I2S digital",
+      " - peak  99%"
+    ],
+    "Sound Processing": [
+      "running"
+    ],
+    "AGC Gain": [
+      3.89,
+      "x"
+    ],
+    "UDP Sound Sync": [
+      "off"
+    ]
+  },
+  "opt": 79,
+  "brand": "WLED",
+  "product": "FOSS",
+  "mac": "1cc3abe094a8",
+  "ip": "192.168.50.157"
+}
