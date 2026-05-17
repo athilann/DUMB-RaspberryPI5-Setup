@@ -39,6 +39,7 @@ mount required.
 | Service    | Port  | Purpose                                         |
 |------------|-------|-------------------------------------------------|
 | Threadfin  | 34400 | IPTV M3U proxy; emulates HDHomeRun tuner for Plex |
+| HyperHDR   | 8090  | Ambient lighting controller (HDR tone mapping for LED strips) |
 
 ---
 

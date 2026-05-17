@@ -1,4 +1,23 @@
 services:
+  hyperhdr:
+    image: umuugg/hyperhdr-ha-aarch64:latest
+    container_name: hyperhdr
+    network_mode: host
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /opt/dumb/data/hyperhdr:/config
+    devices:
+      - /dev/video0:/dev/video0
+      - /dev/video1:/dev/video1
+    # Uncomment if using a serial/USB LED controller:
+    # devices:
+    #   - /dev/ttyUSB0:/dev/ttyUSB0
+    #   - /dev/ttyACM0:/dev/ttyACM0
+    restart: unless-stopped
+
   threadfin:
     image: mgoerentz/threadfin:latest
     container_name: threadfin
