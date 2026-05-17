@@ -88,7 +88,16 @@ def setup_segments():
         "AudioReactive": {"on": False},
         "seg": segs,
     })
-    return r.get("success", False)
+    ok = r.get("success", False)
+    if ok:
+        # Save to WLED preset 1 and set as boot preset so WLED starts
+        # with correct segments and AR disabled after every power cycle
+        try:
+            wled_post("/json/state", {"psave": 1})
+            wled_post("/json/cfg", {"def": {"ps": 1, "on": True, "bri": 255}})
+        except Exception:
+            pass  # non-critical — just means next boot needs setup again
+    return ok
 
 
 def avg_color(flat, led_start, led_stop):
