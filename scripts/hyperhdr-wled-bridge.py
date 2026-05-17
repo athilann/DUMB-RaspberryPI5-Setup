@@ -15,31 +15,41 @@ HYPERHDR_PORT = 8090
 WLED_URL = "http://192.168.50.157"
 
 # LED layout — 534 LEDs, counterclockwise from front, starting at bottom-center going left:
-#   0–81   : bottom-left  (82 LEDs)
-#   82–178 : left side up (97 LEDs)
-#   179–348: top L→R      (170 LEDs)
-#   349–443: right side dn (95 LEDs)
-#   444–533: bottom-right  (90 LEDs)
+#   Physical WLED:    0–81   bottom-left (center→left corner)
+#                    82–178  left side (bottom→top)
+#                   179–348  top (left→right)
+#                   349–443  right side (top→bottom)
+#                   444–533  bottom-right (right corner→center)
+#
+# HyperHDR Classic layout (position=3, clockwise from top-left):
+#   H   0–169  top (left→right)
+#   H 170–264  right (top→bottom)
+#   H 265–436  bottom (right→left)
+#   H 437–533  left (bottom→top)
+#
+# Mapping: physical P → HyperHDR H
+#   P   0–178  →  H = P + 355  (bottom-left and left side)
+#   P 179–533  →  H = P - 179  (top, right, bottom-right)
 #
 # Each entry: (wled_start, wled_stop_inclusive, hyperhdr_led_start, hyperhdr_led_stop_inclusive)
 ZONES = [
-    # bottom-left: 2 zones
-    (0,   40,   0,   40),
-    (41,  81,   41,  81),
-    # left: 2 zones
-    (82,  129,  82,  129),
-    (130, 178,  130, 178),
-    # top: 4 zones
-    (179, 220,  179, 220),
-    (221, 262,  221, 262),
-    (263, 304,  263, 304),
-    (305, 348,  305, 348),
-    # right: 2 zones
-    (349, 396,  349, 396),
-    (397, 443,  397, 443),
-    # bottom-right: 2 zones
-    (444, 488,  444, 488),
-    (489, 533,  489, 533),
+    # bottom-left: 2 zones  (P 0–81 → H 355–436, mapping H=P+355)
+    (0,   40,  355, 395),
+    (41,  81,  396, 436),
+    # left: 2 zones          (P 82–178 → H 437–533, mapping H=P+355)
+    (82,  129, 437, 484),
+    (130, 178, 485, 533),
+    # top: 4 zones           (P 179–348 → H 0–169, mapping H=P-179)
+    (179, 220, 0,   41),
+    (221, 262, 42,  83),
+    (263, 304, 84,  125),
+    (305, 348, 126, 169),
+    # right: 2 zones         (P 349–443 → H 170–264, mapping H=P-179)
+    (349, 396, 170, 217),
+    (397, 443, 218, 264),
+    # bottom-right: 2 zones  (P 444–533 → H 265–354, mapping H=P-179)
+    (444, 488, 265, 309),
+    (489, 533, 310, 354),
 ]
 
 
