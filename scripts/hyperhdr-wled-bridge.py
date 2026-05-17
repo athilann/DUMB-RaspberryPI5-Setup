@@ -99,16 +99,29 @@ def avg_color(flat, led_start, led_stop):
     return [r // count, g // count, b // count]
 
 
+wled_was_offline = False
+
+
 def update_wled(flat):
+    global wled_was_offline
+    if wled_was_offline:
+        # WLED just came back — run a clean segment setup before sending colors
+        try:
+            setup_segments()
+            time.sleep(0.5)
+            wled_was_offline = False
+            print("WLED reconnected, segments restored")
+        except Exception:
+            return  # still coming up, try next frame
     segs = []
     for i, (ws, we, hs, he) in enumerate(ZONES):
         color = avg_color(flat, hs, he)
-        # Include start/stop every frame so segments are re-created if WLED rebooted
-        segs.append({"id": i, "start": ws, "stop": we + 1, "fx": 0, "frz": False, "col": [color]})
-    # Disable any leftover segments beyond our count
-    for i in range(len(ZONES), 16):
-        segs.append({"id": i, "stop": 0})
-    wled_post("/json/state", {"on": True, "transition": 0, "seg": segs})
+        segs.append({"id": i, "col": [color]})
+    try:
+        wled_post("/json/state", {"on": True, "transition": 0, "seg": segs})
+    except Exception:
+        wled_was_offline = True
+        raise
 
 
 def ws_handshake(sock):
