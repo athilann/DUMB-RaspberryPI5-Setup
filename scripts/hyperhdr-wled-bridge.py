@@ -79,10 +79,13 @@ def setup_segments():
     for i in range(len(ZONES), 16):
         segs.append({"id": i, "stop": 0})
 
+    # Disable AudioReactive output — it re-enables on every WLED reboot
+    # and will override segment colors with audio effects if left on
     r = wled_post("/json/state", {
         "on": True,
         "bri": 255,
         "transition": 0,
+        "AudioReactive": {"on": False},
         "seg": segs,
     })
     return r.get("success", False)
@@ -102,17 +105,34 @@ def avg_color(flat, led_start, led_stop):
 wled_was_offline = False
 
 
+def wled_segments_ok():
+    """Return True if WLED currently has the correct number of active segments."""
+    try:
+        state = json.loads(urllib.request.urlopen(
+            f"{WLED_URL}/json/state", timeout=3
+        ).read())
+        active = [s for s in state.get("seg", []) if s.get("stop", 0) > s.get("start", 0)]
+        return len(active) >= len(ZONES)
+    except Exception:
+        return False
+
+
 def update_wled(flat):
     global wled_was_offline
     if wled_was_offline:
-        # WLED just came back — run a clean segment setup before sending colors
+        # WLED just came back — configure segments once, then wait for them to apply
         try:
             setup_segments()
-            time.sleep(0.5)
-            wled_was_offline = False
-            print("WLED reconnected, segments restored")
         except Exception:
-            return  # still coming up, try next frame
+            return  # still coming up, skip frame and retry next
+        # Verify with retries — do NOT call setup_segments() again, just wait
+        for attempt in range(10):
+            time.sleep(1.0)
+            if wled_segments_ok():
+                wled_was_offline = False
+                print(f"WLED reconnected, segments verified after {attempt + 1}s")
+                break
+        return  # skip this frame regardless, start fresh next
     segs = []
     for i, (ws, we, hs, he) in enumerate(ZONES):
         color = avg_color(flat, hs, he)
