@@ -101,10 +101,14 @@ def avg_color(flat, led_start, led_stop):
 
 def update_wled(flat):
     segs = []
-    for i, (_, _, hs, he) in enumerate(ZONES):
+    for i, (ws, we, hs, he) in enumerate(ZONES):
         color = avg_color(flat, hs, he)
-        segs.append({"id": i, "col": [color]})
-    wled_post("/json/state", {"transition": 0, "seg": segs})
+        # Include start/stop every frame so segments are re-created if WLED rebooted
+        segs.append({"id": i, "start": ws, "stop": we + 1, "fx": 0, "frz": False, "col": [color]})
+    # Disable any leftover segments beyond our count
+    for i in range(len(ZONES), 16):
+        segs.append({"id": i, "stop": 0})
+    wled_post("/json/state", {"on": True, "transition": 0, "seg": segs})
 
 
 def ws_handshake(sock):
