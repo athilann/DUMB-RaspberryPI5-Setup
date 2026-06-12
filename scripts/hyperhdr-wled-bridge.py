@@ -12,7 +12,7 @@ import urllib.request
 
 HYPERHDR_HOST = "localhost"
 HYPERHDR_PORT = 8090
-WLED_IP = "192.168.50.157"
+WLED_IP = "192.168.50.156"
 WLED_URL = f"http://{WLED_IP}"
 WLED_DDP_PORT = 4048
 
